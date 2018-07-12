@@ -82,6 +82,10 @@
 -define(MAXPROPERTIES,        <<"maxProperties">>).
 -define(MINPROPERTIES,        <<"minProperties">>).
 
+%% Constant definitions to support Swagger discriminator
+-define(DISCRIMINATOR,        <<"discriminator">>).
+-define(DEFINITIONS,          <<"#/definitions/">>).
+
 %% Constant definitions for Json types
 -define(ANY,                  <<"any">>).
 -define(ARRAY,                <<"array">>).
