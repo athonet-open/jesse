@@ -85,6 +85,29 @@ check_value(_Value, [{?ID, _ID} | _Attrs], State) ->
   handle_schema_invalid(?wrong_draft4_id_tag, State);
 check_value(Value, [{?REF, RefSchemaURI} | _], State) ->
   validate_ref(Value, RefSchemaURI, State);
+check_value(Value, [{?TYPE, ?OBJECT = Type} | Attrs], State) ->
+  NewState = check_type(Value, Type, State),
+  Discriminator = proplists:get_value(?DISCRIMINATOR, Attrs),
+  case Discriminator of
+    undefined -> check_value(Value, Attrs, NewState);
+    _ -> DiscriminatorAtom = binary_to_existing_atom(Discriminator, utf8),
+      DiscriminatorValue = maps:get(DiscriminatorAtom, Value, undefined),
+      DiscriminatorOk = maps:get(discriminator_ok, Value, false),
+      case {DiscriminatorValue, DiscriminatorOk} of
+        {D, false} when D /= undefined ->
+          Definition =
+            list_to_binary(binary_to_list(?DEFINITIONS) ++ binary_to_list(DiscriminatorValue)),
+          Properties = proplists:get_value(?PROPERTIES, Attrs, []),
+          ObjSchema = proplists:get_value(Discriminator, Properties),
+          case ObjSchema of
+            undefined -> handle_schema_invalid(?schema_invalid, NewState);
+            _ -> UW = unwrap([{?REF, Definition}]),
+              NewValue = maps:put(discriminator_ok, true, Value),
+              check_value(NewValue, UW, NewState)
+          end;
+        _ -> check_value(Value, Attrs, NewState)
+      end
+  end;
 check_value(Value, [{?TYPE, Type} | Attrs], State) ->
   NewState = check_type(Value, Type, State),
   check_value(Value, Attrs, NewState);
