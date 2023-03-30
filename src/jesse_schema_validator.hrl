@@ -81,6 +81,7 @@
 -define(MULTIPLEOF,           <<"multipleOf">>).
 -define(MAXPROPERTIES,        <<"maxProperties">>).
 -define(MINPROPERTIES,        <<"minProperties">>).
+-define(NULLABLE,             <<"nullable">>).
 
 %% Constant definitions to support Swagger discriminator
 -define(DISCRIMINATOR,        <<"discriminator">>).
