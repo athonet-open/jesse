@@ -285,6 +285,9 @@ check_value(Value, [{?ONEOF, Schemas} | Attrs], State) ->
 check_value(Value, [{?NOT, Schema} | Attrs], State) ->
   NewState = check_not(Value, Schema, State),
   check_value(Value, Attrs, NewState);
+check_value(Value, [{?NULLABLE, Schema} | _Attrs], State) ->
+  NewState = check_null(Value, Schema, State),
+  check_value(Value, [], NewState);
 check_value(Value, [], State) ->
   maybe_external_check_value(Value, State);
 check_value(Value, [_Attr | Attrs], State) ->
@@ -1267,6 +1270,13 @@ check_not(Value, Schema, State) ->
     {true, _}  -> handle_data_invalid(?not_schema_valid, Value, State);
     {false, _} -> State
   end.
+
+check_null(null, <<"true">>, State) ->
+  State;
+check_null(null, <<"false">>, State) ->
+  handle_data_invalid(?data_invalid, null, State);
+check_null(_Value, _Schema, State) ->
+  State.
 
 %% @doc Validate a value against a schema in a given state.
 %% Used by all combinators to run validation on a schema.
