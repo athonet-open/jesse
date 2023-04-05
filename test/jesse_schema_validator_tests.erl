@@ -649,7 +649,191 @@ contains_with_boolean_value_test() ->
               , jesse_schema_validator:validate(InvalidSchema, [], [])
               ).
 
+nullable_object_test() ->
 
+  IntegerValueObj = #{<<"an_integer_or_null_value">> => 4},
+  NullValueObj = #{<<"an_integer_or_null_value">> => null},
+
+  % Schema where the integer can be null
+  Schema1 = {[
+    {<<"$schema">>, <<"http://json-schema.org/draft-04/schema#">>},
+    {<<"type">>, <<"object">>},
+    {<<"properties">>, {[
+      {<<"an_integer_or_null_value">>, {[
+        {<<"type">>, <<"integer">>},
+        {<<"nullable">>, true}
+      ]}}
+    ]}}
+  ]},
+
+  ?assertEqual(
+    {ok, IntegerValueObj},
+    jesse_schema_validator:validate(Schema1, IntegerValueObj, [])
+  ),
+
+  ?assertEqual(
+    {ok, NullValueObj},
+    jesse_schema_validator:validate(Schema1, NullValueObj, [])
+  ),
+
+  % Schema where the integer cannot be null
+  Schema2 = {[
+    {<<"$schema">>, <<"http://json-schema.org/draft-04/schema#">>},
+    {<<"type">>, <<"object">>},
+    {<<"properties">>, {[
+      {<<"an_integer_or_null_value">>, {[
+        {<<"type">>, <<"integer">>},
+        {<<"nullable">>, false}
+      ]}}
+    ]}}
+  ]},
+
+  ?assertEqual(
+    {ok, IntegerValueObj},
+    jesse_schema_validator:validate(Schema2, IntegerValueObj, [])
+  ),
+
+  ?assertThrow([{ data_invalid
+    , {[
+      {<<"type">>, <<"integer">>}
+      , {<<"nullable">>, false}
+    ]}
+    , wrong_type, null, [<<"an_integer_or_null_value">>]}],
+    jesse_schema_validator:validate(Schema2, NullValueObj, [])
+  ),
+
+
+  NestedIntegerValueObj = #{<<"an_integer_or_null_value">> => #{<<"another_object">> => 4}},
+  NestedNullValueObj = #{<<"an_integer_or_null_value">> => #{<<"another_object">> => null}},
+
+  % Schema where the integer can be null - nested object checking recursion
+  Schema3 = {[
+    {<<"$schema">>, <<"http://json-schema.org/draft-04/schema#">>},
+    {<<"type">>, <<"object">>},
+    {<<"properties">>, {[
+      {<<"an_integer_or_null_value">>, {[
+        {<<"type">>, <<"object">>},
+        {<<"properties">>, {[
+          {<<"another_object">>, {[
+            {<<"type">>, <<"integer">>},
+            {<<"nullable">>, true}
+          ]}}
+        ]}}
+      ]}}
+    ]}}
+  ]},
+
+  ?assertEqual(
+    {ok, NestedIntegerValueObj},
+    jesse_schema_validator:validate(Schema3, NestedIntegerValueObj, [])
+  ),
+
+  ?assertEqual(
+    {ok, NestedNullValueObj},
+    jesse_schema_validator:validate(Schema3, NestedNullValueObj, [])
+  ),
+
+  % Schema where the integer cannot be null - nested object checking recursion
+  Schema4 = {[
+    {<<"$schema">>, <<"http://json-schema.org/draft-04/schema#">>},
+    {<<"type">>, <<"object">>},
+    {<<"properties">>, {[
+      {<<"an_integer_or_null_value">>, {[
+        {<<"type">>, <<"object">>},
+        {<<"properties">>, {[
+          {<<"another_object">>, {[
+            {<<"type">>, <<"integer">>},
+            {<<"nullable">>, false}
+          ]}}
+        ]}}
+      ]}}
+    ]}}
+  ]},
+
+  ?assertEqual(
+    {ok, NestedIntegerValueObj},
+    jesse_schema_validator:validate(Schema4, NestedIntegerValueObj, [])
+  ),
+
+  ?assertThrow([{ data_invalid
+    , {[
+      {<<"type">>, <<"integer">>}
+      , {<<"nullable">>, false}
+    ]}
+    , wrong_type, null, [<<"an_integer_or_null_value">>, <<"another_object">>]}],
+    jesse_schema_validator:validate(Schema4, NestedNullValueObj, [])
+  ),
+
+  % Schema where the integer cannot be null - not specified
+  Schema5 = {[
+    {<<"$schema">>, <<"http://json-schema.org/draft-04/schema#">>},
+    {<<"type">>, <<"object">>},
+    {<<"properties">>, {[
+      {<<"an_integer_or_null_value">>, {[
+        {<<"type">>, <<"object">>},
+        {<<"properties">>, {[
+          {<<"another_object">>, {[
+            {<<"type">>, <<"integer">>}
+          ]}}
+        ]}}
+      ]}}
+    ]}}
+  ]},
+
+  ?assertEqual(
+    {ok, NestedIntegerValueObj},
+    jesse_schema_validator:validate(Schema5, NestedIntegerValueObj, [])
+  ),
+
+  ?assertThrow([{ data_invalid
+    , {[
+      {<<"type">>, <<"integer">>}
+    ]}
+    , wrong_type, null, [<<"an_integer_or_null_value">>, <<"another_object">>]}],
+    jesse_schema_validator:validate(Schema5, NestedNullValueObj, [])
+  ).
+
+map_schema_nullable_test() ->
+  Schema1 = #{ <<"$schema">> => <<"http://json-schema.org/draft-04/schema#">>
+    , <<"type">> => <<"object">>
+    , <<"properties">> =>
+    #{ <<"foo">> => #{
+      <<"type">> => <<"object">>,
+      <<"properties">> => #{
+        <<"subfoo">> => #{
+          <<"type">> => <<"integer">>,
+          <<"nullable">> => <<"true">>
+        }
+      }
+    }
+    }
+  },
+
+  IntegerValueObj = #{<<"foo">> => #{<<"subfoo">> => 4}},
+  NullValueObj = #{<<"foo">> => #{<<"subfoo">> => null}},
+
+  ?assertEqual({ok, IntegerValueObj} ,   jesse_schema_validator:validate(Schema1, IntegerValueObj, [])),
+  ?assertEqual({ok, NullValueObj} ,   jesse_schema_validator:validate(Schema1, NullValueObj, [])),
+
+  Schema2 = #{ <<"$schema">> => <<"http://json-schema.org/draft-04/schema#">>
+    , <<"type">> => <<"object">>
+    , <<"properties">> =>
+    #{ <<"foo">> => #{
+      <<"type">> => <<"object">>,
+      <<"properties">> => #{
+        <<"subfoo">> => #{
+          <<"type">> => <<"integer">>
+        }
+      }
+    }
+    }
+  },
+
+
+  ?assertThrow([{ data_invalid, #{<<"type">> := <<"integer">>}
+    , wrong_type, null, [<<"foo">>, <<"subfoo">>]}] ,
+    jesse_schema_validator:validate(Schema2, NullValueObj, [])),
+  ?assertEqual({ok, IntegerValueObj} ,   jesse_schema_validator:validate(Schema2, IntegerValueObj, [])).
 
 -endif.
 -endif.
