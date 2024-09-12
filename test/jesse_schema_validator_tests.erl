@@ -100,9 +100,18 @@ data_invalid_test_draft(URI) ->
 
   %% additionalProperties, level1
   ?assertThrow(
-    [{data_invalid, Schema2, no_extra_properties_allowed, _, [<<"bar">>]}],
-    jesse_schema_validator:validate(Schema2, {[{<<"foo">>, 0},
-                                               {<<"bar">>, <<"baz">>}]}, [])
+    [{
+     data_invalid,
+     Schema2,
+     no_extra_properties_allowed,
+     _,
+     [<<"bar">>]
+    }],
+    jesse_schema_validator:validate(
+      Schema2,
+      {[{<<"foo">>, 0}, {<<"bar">>, <<"baz">>}]},
+      []
+     )
   ),
 
   %% Object, additionalProperties, level 2
@@ -703,8 +712,14 @@ nullable_object_test() ->
   ),
 
 
-  NestedIntegerValueObj = #{<<"an_integer_or_null_value">> => #{<<"another_object">> => 4}},
-  NestedNullValueObj = #{<<"an_integer_or_null_value">> => #{<<"another_object">> => null}},
+  NestedIntegerValueObj = #{
+      <<"an_integer_or_null_value">> => #{
+                                          <<"another_object">> => 4
+                                         }
+  },
+  NestedNullValueObj = #{
+      <<"an_integer_or_null_value">> => #{<<"another_object">> => null}
+  },
 
   % Schema where the integer can be null - nested object checking recursion
   Schema3 = {[
@@ -760,7 +775,8 @@ nullable_object_test() ->
       {<<"type">>, <<"integer">>}
       , {<<"nullable">>, false}
     ]}
-    , wrong_type, null, [<<"an_integer_or_null_value">>, <<"another_object">>]}],
+    , wrong_type, null,
+    [<<"an_integer_or_null_value">>, <<"another_object">>]}],
     jesse_schema_validator:validate(Schema4, NestedNullValueObj, [])
   ),
 
@@ -789,7 +805,8 @@ nullable_object_test() ->
     , {[
       {<<"type">>, <<"integer">>}
     ]}
-    , wrong_type, null, [<<"an_integer_or_null_value">>, <<"another_object">>]}],
+    , wrong_type, null,
+    [<<"an_integer_or_null_value">>, <<"another_object">>]}],
     jesse_schema_validator:validate(Schema5, NestedNullValueObj, [])
   ).
 
@@ -812,8 +829,14 @@ map_schema_nullable_test() ->
   IntegerValueObj = #{<<"foo">> => #{<<"subfoo">> => 4}},
   NullValueObj = #{<<"foo">> => #{<<"subfoo">> => null}},
 
-  ?assertEqual({ok, IntegerValueObj} ,   jesse_schema_validator:validate(Schema1, IntegerValueObj, [])),
-  ?assertEqual({ok, NullValueObj} ,   jesse_schema_validator:validate(Schema1, NullValueObj, [])),
+  ?assertEqual(
+     {ok, IntegerValueObj},
+     jesse_schema_validator:validate(Schema1, IntegerValueObj, [])
+    ),
+  ?assertEqual(
+     {ok, NullValueObj},
+     jesse_schema_validator:validate(Schema1, NullValueObj, [])
+    ),
 
   Schema2 = #{ <<"$schema">> => <<"http://json-schema.org/draft-04/schema#">>
     , <<"type">> => <<"object">>
@@ -830,10 +853,20 @@ map_schema_nullable_test() ->
   },
 
 
-  ?assertThrow([{ data_invalid, #{<<"type">> := <<"integer">>}
-    , wrong_type, null, [<<"foo">>, <<"subfoo">>]}] ,
-    jesse_schema_validator:validate(Schema2, NullValueObj, [])),
-  ?assertEqual({ok, IntegerValueObj} ,   jesse_schema_validator:validate(Schema2, IntegerValueObj, [])).
+  ?assertThrow([
+                {
+                 data_invalid,
+                 #{<<"type">> := <<"integer">>},
+                 wrong_type,
+                 null,
+                 [<<"foo">>, <<"subfoo">>]}
+               ],
+               jesse_schema_validator:validate(Schema2, NullValueObj, [])
+              ),
+  ?assertEqual(
+     {ok, IntegerValueObj},
+     jesse_schema_validator:validate(Schema2, IntegerValueObj, [])
+    ).
 
 -endif.
 -endif.

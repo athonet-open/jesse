@@ -104,7 +104,8 @@ check_value(Value, [{?TYPE, ?OBJECT = Type} | Attrs], State) ->
       case {DiscriminatorValue, DiscriminatorOk} of
         {D, false} when D /= undefined ->
           Definition =
-            list_to_binary(binary_to_list(?DEFINITIONS) ++ binary_to_list(DiscriminatorValue)),
+            list_to_binary(binary_to_list(?DEFINITIONS)
+            ++ binary_to_list(DiscriminatorValue)),
           Properties = proplists:get_value(?PROPERTIES, Attrs, []),
           ObjSchema = proplists:get_value(Discriminator, Properties),
           case ObjSchema of
